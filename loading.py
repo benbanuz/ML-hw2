@@ -1,13 +1,13 @@
-import pandas as ps
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
 def load_csv():
-    data = ps.read_csv("ElectionsData.csv")
+    data = pd.read_csv("ElectionsData.csv")
     return data
 
 
-def split_data(data: ps.DataFrame, valid_ratio: float = 0.15, test_ratio: float = 0.1):
+def split_data(data: pd.DataFrame, valid_ratio: float = 0.15, test_ratio: float = 0.1):
     train_ratio = 1 - (valid_ratio + test_ratio)
     assert train_ratio >= 0.5
 
