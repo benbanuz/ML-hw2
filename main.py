@@ -27,16 +27,20 @@ def main():
     valid = pd.DataFrame(valid)
     test = pd.DataFrame(test)
 
-    print(valid["Overall_happiness_score"].isna().sum())
-    imputation.related_features_imputation(14, valid, train)
-    print(valid["Overall_happiness_score"].isna().sum())
-    valid.to_csv("hello.csv")
+    plt.imshow(train.corr())
+    plt.colorbar()
+    plt.show()
+
+    imputation.imputation(train)
+    train = cleansing.cleanse_data(train)
+    train.to_csv("hello.csv")
 
 
 """""
-    imputation.imputation(train)
-    train = cleansing.cleanse_data(train)
-    train.to_csv("hello.csv")"""
+    print(valid["Overall_happiness_score"].isna().sum())
+    imputation.related_features_imputation(14, valid, train)
+    print(valid["Overall_happiness_score"].isna().sum())
+    valid.to_csv("hello.csv")"""
 
 if __name__ == "__main__":
     main()

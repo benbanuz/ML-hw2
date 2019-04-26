@@ -2,15 +2,21 @@ import pandas as pd
 import numpy as np
 
 
-def median_imputation(feature: str, df: pd.DataFrame):
+def median_imputation(feature: str, df: pd.DataFrame, df2: pd.DataFrame = None):
     # complete the missing values of a feature based on the avg of what all the other samples that voted the same
     if df[feature].dtype == float:
         for voting in df["Vote"].unique():
-            ss = df.groupby("Vote")[feature].mean()[voting]
+            if df2 is None:
+                ss = df.groupby("Vote")[feature].mean()[voting]
+            else:
+                ss = df2.groupby("Vote")[feature].mean()[voting]
             df.loc[(df["Vote"] == voting) & (df[feature].isnull()), feature] = ss
     else:
         # complete the missing categorial value with the category most samples have
-        common_val = df[feature].value_counts().idxmax()
+        if df2 is None:
+            common_val = df[feature].value_counts().idxmax()
+        else:
+            common_val = df2[feature].value_counts().idxmax()
         df[feature].fillna(common_val, inplace=True)
 
 
@@ -44,6 +50,8 @@ def close_nieg(sample_idx: int, feature: int, df: pd.DataFrame, df2: pd.DataFram
 
 
 def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFrame = None):
+    if feature >= 27:
+        return -1
     if df2 is None:
         mat = df.corr().dropna().as_matrix()
     else:
@@ -85,7 +93,11 @@ def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFram
         count = count + 1
 
 
-def imputation(dataset):
+def imputation(dataset, dataset2=None):
     # do a median_imputition
+    idx = 0
     for col in dataset:
-        median_imputation(col, dataset)
+        print(idx, col)
+        related_features_imputation(idx, dataset, dataset2)
+        median_imputation(col, dataset, dataset2)
+        idx = idx + 1
