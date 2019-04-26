@@ -3,7 +3,7 @@ import numpy as np
 
 
 def median_imputation(feature: str, df: pd.DataFrame):
-    # complete the missing values of a feature based on the avg of what all the other sampels that voted the same
+    # complete the missing values of a feature based on the avg of what all the other samples that voted the same
     if df[feature].dtype == float:
         for voting in df["Vote"].unique():
             ss = df.groupby("Vote")[feature].mean()[voting]
