@@ -5,6 +5,7 @@ import sklearn
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
 import imputation
+import cleansing
 
 
 def main():
@@ -26,11 +27,16 @@ def main():
     valid = pd.DataFrame(valid)
     test = pd.DataFrame(test)
 
-    print(train["Overall_happiness_score"].isna().sum())
-    imputation.related_features_imputation(14, train)
-    print(train["Overall_happiness_score"].isna().sum())
-    train.to_csv("hello.csv")
+    print(valid["Overall_happiness_score"].isna().sum())
+    imputation.related_features_imputation(14, valid, train)
+    print(valid["Overall_happiness_score"].isna().sum())
+    valid.to_csv("hello.csv")
 
+
+"""""
+    imputation.imputation(train)
+    train = cleansing.cleanse_data(train)
+    train.to_csv("hello.csv")"""
 
 if __name__ == "__main__":
     main()
