@@ -11,7 +11,7 @@ def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
     :return: a matrice m of size (n_features, n_features) where m[i,j] = mutual_information(feature_i, feature_j)
     """
     # get the features
-    features = df.columns.to_numpy().tolist()
+    features = list(df)
 
     # start with zeroes everywhere but the diagonal, as mutual_information(feature_i, feature_i) = 1 when normalized
     mi_matrix = np.eye(len(features))

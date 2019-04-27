@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import feat_selection as fs
 
 
 def median_imputation(feature: str, df: pd.DataFrame, df2: pd.DataFrame = None):
@@ -50,34 +51,21 @@ def close_nieg(sample_idx: int, feature: int, df: pd.DataFrame, df2: pd.DataFram
 
 
 def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFrame = None):
-    if feature >= 27:
-        return -1
     if df2 is None:
-        mat = df.corr().dropna().as_matrix()
+        df_tag = df.dropna()
+        mat = fs.calc_MI_matrix(df_tag)
     else:
-        mat = df2.corr().dropna().as_matrix()
+        df_tag = df2.dropna()
+        mat = fs.calc_MI_matrix(df_tag)
     max_corr = [(i, mat[i][feature]) for i in range(mat.shape[0]) if
                 i != feature and df.dtypes[i] == float and abs(mat[i][feature]) > 0.5]
-    # max_corr = []
-    # for i in range(mat.shape[0]):
-    #     if abs(mat[i][feature]) > 0.5 and i != feature:
-    #         max_corr.append((i, mat[i][feature]))
-    max_corr.sort(reverse=True, key=lambda tup: tup[1])
 
-    # drop categorical values
-    # to_remove = []
-    # for most_corr_feat, best_corr in max_corr:
-    #     if df.dtypes[most_corr_feat] != float:
-    #         to_remove.append((most_corr_feat, best_corr))
-    #
-    # for feat in to_remove:
-    #     max_corr.remove(feat)
+    max_corr.sort(reverse=True, key=lambda tup: tup[1])
 
     # if no correlation with any feature do nothing
     if len(max_corr) == 0:
         return -1
 
-    # count = 0
     for count, (idx, row) in enumerate(df.iterrows()):
         if pd.isna(row[feature]):
             for most_corr_feat, best_corr in max_corr:
@@ -91,7 +79,6 @@ def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFram
                     close_nieg_index = close_nieg(count, most_corr_feat, df, df2)
                     df.iloc[count, feature] = df2.iloc[close_nieg_index, feature]
                 break
-        # count = count + 1
 
 
 def imputation(dataset, dataset2=None):
