@@ -27,7 +27,8 @@ def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
     return mi_matrix
 
 
-def remove_similar_features(df: pd.DataFrame, target:str, max_remove: int, close_thresh: int = 2, mi_thres: float = 0.8) -> List[str]:
+def remove_similar_features(df: pd.DataFrame, target: str, max_remove: int, close_thresh: int = 2,
+                            mi_thres: float = 0.8) -> List[str]:
     """
     removes features that share a lot of info
     :param df: the dataframe
@@ -91,15 +92,15 @@ def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres
     # all features except for the target
     features: List[str] = df.columns.to_numpy().tolist()
     features.remove(target)
-    mi_vals = {feat: normalized_mutual_info_score(df[feat], df[target]) for feat in features}
+    mi_vals = {feat: normalized_mutual_info_score(df[feat].values, df[target].values) for feat in features}
 
     # sort by mi in relation to target
-    mi_vals: List[Tuple[str, float]] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
+    sorted_mi_vals: List[Tuple[str, float]] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
 
-    for i in range(0, max_remove, -1):
+    for i in range(max_remove, 0, -1):
         # remove all features below the threshold (only need to find the first because we already sorted it)
-        if mi_vals[i][1] < mi_thres:
-            mi_vals = mi_vals[i + 1:]
+        if sorted_mi_vals[i][1] < mi_thres:
+            sorted_mi_vals = sorted_mi_vals[i + 1:]
             break
 
-    return [target] + list(tuple(zip(*mi_vals))[0])
+    return [target] + list(tuple(zip(*sorted_mi_vals))[0])
