@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.metrics import normalized_mutual_info_score
 import numpy as np
-from typing import List
+from typing import List, Tuple
 
 
 def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
@@ -27,17 +27,19 @@ def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
     return mi_matrix
 
 
-def remove_similar_features(df: pd.DataFrame, max_remove: int, close_thresh: int = 3, mi_thres: float = 0.05) -> List[str]:
+def remove_similar_features(df: pd.DataFrame, target:str, max_remove: int, close_thresh: int = 2, mi_thres: float = 0.8) -> List[str]:
     """
     removes features that share a lot of info
-    :param df: dataframe, should **NOT** include the target
+    :param df: the dataframe
+    :param target: the target feature
     :param max_remove: maximum number of features to remove
     :param close_thresh: how many features should be close to a feature in order for us to remove it
     :param mi_thres: mi threshold for considering features to be close
     :return: list of features after the removal (i.e the ones that weren't removed)
     """
-    # get features list
+    # get features list without the target
     features: List[str] = df.feature_names
+    features.remove(target)
     # empty dictionaries for close features and the number of them
     close_features = {feature: [] for feature in features}
     num_close = {feature: 0 for feature in features}
@@ -50,7 +52,7 @@ def remove_similar_features(df: pd.DataFrame, max_remove: int, close_thresh: int
         for j in range(i):
             feat_i, feat_j = features[i], features[j]
             # if the mi value is below the threshold
-            if mi_matrix[i, j] < mi_thres:
+            if mi_matrix[i, j] > mi_thres:
                 # mark the features as close
                 close_features[feat_i].append(feat_j)
                 close_features[feat_j].append(feat_i)
@@ -73,10 +75,10 @@ def remove_similar_features(df: pd.DataFrame, max_remove: int, close_thresh: int
         # remove the feature
         close_features.pop(worst_feature)
 
-    return list(close_features.keys())
+    return [target] + list(close_features.keys())
 
 
-def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres: float = 0.8) -> List[str]:
+def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres: float = 0.2) -> List[str]:
     """
     remove features that don't have enough mutual information with the target
     :param df: the dataframe
@@ -91,13 +93,12 @@ def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres
     mi_vals = {feat: normalized_mutual_info_score(df[feat], df[target]) for feat in features}
 
     # sort by mi in relation to target
-    mi_vals = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
+    mi_vals: Tuple[str, float] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
 
-    for i in range(max_remove):
-        # if no features are far away, stop removing features
+    for i in range(0, max_remove, -1):
+        # remove all features below the threshold (only need to find the first because we already sorted it)
         if mi_vals[i][1] < mi_thres:
+            mi_vals = mi_vals[i + 1:]
             break
-        # remove the furthest feature
-        features.remove(mi_vals[i][0])
 
-    return features
+    return [target] + tuple(zip(*mi_vals))[0]
