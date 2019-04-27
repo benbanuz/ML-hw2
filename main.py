@@ -31,7 +31,7 @@ def main():
     plt.show()
 
     imputation.imputation(train)
-    train = cleansing.cleanse_data(train)
+    train = cleansing.change_categorials(train)
     train.to_csv("hello.csv")
 
 
