@@ -97,7 +97,7 @@ def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres
     # sort by mi in relation to target
     sorted_mi_vals: List[Tuple[str, float]] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
 
-    for i in range(max_remove, 0, -1):
+    for i in range(max_remove-1, -1, -1):
         # remove all features below the threshold (only need to find the first because we already sorted it)
         if sorted_mi_vals[i][1] < mi_thres:
             sorted_mi_vals = sorted_mi_vals[i + 1:]
