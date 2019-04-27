@@ -14,10 +14,9 @@ def main():
     # TODO maybe change Looking_at_poles_results to boolean
     # TODO add all relevant types
     types = {"Vote": 'category', "Most_Important_Issue": 'category', "Looking_at_poles_results": 'category',
-             "Married": 'category'
-        , "Gender": 'category', "Voting_Time": 'category', "Will_vote_only_large_party": 'category',
-             "Age_group": 'category', "Main_transportation": 'category', "Financial_agenda_matters": 'category',
-             "Occupation": 'category'}
+             "Married": 'category', "Gender": 'category', "Voting_Time": 'category',
+             "Will_vote_only_large_party": 'category', "Age_group": 'category', "Main_transportation": 'category',
+             "Financial_agenda_matters": 'category', "Occupation": 'category'}
 
     for header, type in types.items():
         df[header] = df[header].astype(type)
