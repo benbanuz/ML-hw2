@@ -11,7 +11,7 @@ def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
     :return: a matrice m of size (n_features, n_features) where m[i,j] = mutual_information(feature_i, feature_j)
     """
     # get the features
-    features = df.feature_names
+    features = df.columns.to_numpy().tolist()
 
     # start with zeroes everywhere but the diagonal, as mutual_information(feature_i, feature_i) = 1 when normalized
     mi_matrix = np.eye(len(features))
@@ -20,7 +20,7 @@ def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
     for i in range(len(features)):
         for j in range(i):
             feat_i, feat_j = features[i], features[j]
-            mi = normalized_mutual_info_score(df[feat_i], df[feat_j])
+            mi = normalized_mutual_info_score(df[feat_i].values, df[feat_j].values)
             mi_matrix[i, j] = mi
             mi_matrix[j, i] = mi
 
@@ -38,7 +38,7 @@ def remove_similar_features(df: pd.DataFrame, target:str, max_remove: int, close
     :return: list of features after the removal (i.e the ones that weren't removed)
     """
     # get features list without the target
-    features: List[str] = df.feature_names
+    features: List[str] = df.columns.to_numpy().tolist()
     features.remove(target)
     # empty dictionaries for close features and the number of them
     close_features = {feature: [] for feature in features}
@@ -74,6 +74,7 @@ def remove_similar_features(df: pd.DataFrame, target:str, max_remove: int, close
             num_close[close_feat] -= 1
         # remove the feature
         close_features.pop(worst_feature)
+        num_close.pop(worst_feature)
 
     return [target] + list(close_features.keys())
 
@@ -88,12 +89,12 @@ def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres
     :return: list of features after the removal (i.e the ones that weren't removed)
     """
     # all features except for the target
-    features: List[str] = df.feature_names
+    features: List[str] = df.columns.to_numpy().tolist()
     features.remove(target)
     mi_vals = {feat: normalized_mutual_info_score(df[feat], df[target]) for feat in features}
 
     # sort by mi in relation to target
-    mi_vals: Tuple[str, float] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
+    mi_vals: List[Tuple[str, float]] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
 
     for i in range(0, max_remove, -1):
         # remove all features below the threshold (only need to find the first because we already sorted it)
@@ -101,4 +102,4 @@ def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres
             mi_vals = mi_vals[i + 1:]
             break
 
-    return [target] + tuple(zip(*mi_vals))[0]
+    return [target] + list(tuple(zip(*mi_vals))[0])

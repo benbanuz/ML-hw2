@@ -12,7 +12,7 @@ def median_imputation(feature: str, df: pd.DataFrame, df2: pd.DataFrame = None):
                 ss = df2.groupby("Vote")[feature].mean()[voting]
             df.loc[(df["Vote"] == voting) & (df[feature].isnull()), feature] = ss
     else:
-        # complete the missing categorial value with the category most samples have
+        # complete the missing categorical value with the category most samples have
         if df2 is None:
             common_val = df[feature].value_counts().idxmax()
         else:
@@ -31,20 +31,20 @@ def close_nieg(sample_idx: int, feature: int, df: pd.DataFrame, df2: pd.DataFram
         col = df2.iloc[:, feature]
     col = pd.DataFrame(col)
 
-    count = 0
+    # count = 0
 
     if df2 is None:
-        for idx, row in col.iterrows():
+        for count, (idx, row) in enumerate(col.iterrows()):
             if count != sample_idx and abs(row[0] - sample_val) < min_dist:
                 min_dist = abs(row[0] - sample_val)
                 min_nigh = count
-            count = count + 1
+            # count = count + 1
     else:
-        for idx, row in col.iterrows():
+        for count, (idx, row) in enumerate(col.iterrows()):
             if abs(row[0] - sample_val) < min_dist:
                 min_dist = abs(row[0] - sample_val)
                 min_nigh = count
-            count = count + 1
+            # count = count + 1
 
     return min_nigh
 
@@ -56,31 +56,32 @@ def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFram
         mat = df.corr().dropna().as_matrix()
     else:
         mat = df2.corr().dropna().as_matrix()
-    max_corr = []
-    for i in range(mat.shape[0]):
-        if abs(mat[i][feature]) > 0.5 and i != feature:
-            max_corr.append((i, mat[i][feature]))
+    max_corr = [(i, mat[i][feature]) for i in range(mat.shape[0]) if
+                i != feature and df.dtypes[i] == float and abs(mat[i][feature]) > 0.5]
+    # max_corr = []
+    # for i in range(mat.shape[0]):
+    #     if abs(mat[i][feature]) > 0.5 and i != feature:
+    #         max_corr.append((i, mat[i][feature]))
     max_corr.sort(reverse=True, key=lambda tup: tup[1])
 
-    # drop ctegorial values
-    to_remove = []
-    for i in range(len(max_corr)):
-        most_corr_feat, best_corr = max_corr[i]
-        if df.dtypes[most_corr_feat] != float:
-            to_remove.append((most_corr_feat, best_corr))
-    for i in range(len(to_remove)):
-        max_corr.remove(to_remove[i])
+    # drop categorical values
+    # to_remove = []
+    # for most_corr_feat, best_corr in max_corr:
+    #     if df.dtypes[most_corr_feat] != float:
+    #         to_remove.append((most_corr_feat, best_corr))
+    #
+    # for feat in to_remove:
+    #     max_corr.remove(feat)
 
     # if no correlation with any feature do nothing
     if len(max_corr) == 0:
         return -1
 
-    count = 0
-    for idx, row in df.iterrows():
+    # count = 0
+    for count, (idx, row) in enumerate(df.iterrows()):
         if pd.isna(row[feature]):
-            for i in range(len(max_corr)):
-                most_corr_feat, best_corr = max_corr[i]
-                # chack the sample that is clossest in the correlated feature to the idx sample
+            for most_corr_feat, best_corr in max_corr:
+                # check the sample that is closest in the correlated feature to the idx sample
                 if pd.isna(row[most_corr_feat]):
                     continue
                 if df2 is None:
@@ -90,14 +91,12 @@ def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFram
                     close_nieg_index = close_nieg(count, most_corr_feat, df, df2)
                     df.iloc[count, feature] = df2.iloc[close_nieg_index, feature]
                 break
-        count = count + 1
+        # count = count + 1
 
 
 def imputation(dataset, dataset2=None):
-    # do a median_imputition
-    idx = 0
-    for col in dataset:
+    # do a median_imputation
+    for idx, col in enumerate(dataset):
         print(idx, col)
         related_features_imputation(idx, dataset, dataset2)
         median_imputation(col, dataset, dataset2)
-        idx = idx + 1
