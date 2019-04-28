@@ -50,15 +50,13 @@ def close_nieg(sample_idx: int, feature: int, df: pd.DataFrame, df2: pd.DataFram
     return min_nigh
 
 
-def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFrame = None):
-    if df2 is None:
-        df_tag = df.dropna()
-        mat = fs.calc_MI_matrix(df_tag)
-    else:
-        df_tag = df2.dropna()
-        mat = fs.calc_MI_matrix(df_tag)
-    max_corr = [(i, mat[i][feature]) for i in range(mat.shape[0]) if
-                i != feature and df.dtypes[i] == float and abs(mat[i][feature]) > 0.5]
+def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFrame = None, mi_matrix: np.ndarray = None):
+    if mi_matrix is None:
+        df_tag = (df if df2 is None else df2).dropna()
+        mi_matrix = fs.calc_MI_matrix(df_tag)
+
+    max_corr = [(i, mi_matrix[i][feature]) for i in range(mi_matrix.shape[0]) if
+                i != feature and df.dtypes[i] == float and abs(mi_matrix[i][feature]) > 0.5]
 
     max_corr.sort(reverse=True, key=lambda tup: tup[1])
 
@@ -82,8 +80,16 @@ def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFram
 
 
 def imputation(dataset, dataset2=None):
+    has_na = dataset.isna().any()
+
+    if dataset2 is None:
+        mi_matrix = fs.calc_MI_matrix(dataset.dropna())
+    else:
+        mi_matrix = fs.calc_MI_matrix(dataset2.dropna())
+
     # do a median_imputation
     for idx, col in enumerate(dataset):
-        print(idx, col)
-        related_features_imputation(idx, dataset, dataset2)
-        median_imputation(col, dataset, dataset2)
+        if has_na[col]:
+            print(idx, col)
+            related_features_imputation(idx, dataset, dataset2, mi_matrix)
+            median_imputation(col, dataset, dataset2)
