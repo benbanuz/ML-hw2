@@ -11,31 +11,25 @@ import feat_selection
 
 def main():
     df = loading.load_csv()
-
-    # TODO maybe change Looking_at_poles_results to boolean
-    # TODO add all relevant types
-    types = {"Vote": 'category', "Most_Important_Issue": 'category', "Looking_at_poles_results": 'category',
-             "Married": 'category', "Gender": 'category', "Voting_Time": 'category',
-             "Will_vote_only_large_party": 'category', "Age_group": 'category', "Main_transportation": 'category',
-             "Financial_agenda_matters": 'category', "Occupation": 'category'}
-
-    for header, type in types.items():
-        df[header] = df[header].astype(type)
-
+    # cleansing the data
+    df = cleansing.cleanse(df)
+    for col in df:
+        if col == "Vote":
+            continue
+        df[col].astype(float)
+    print(df.dtypes)
+    plt.imshow(df.corr().as_matrix())
+    plt.colorbar()
+    plt.show()
+    # splitting the data
     train, valid, test = loading.split_data(df)
     train = pd.DataFrame(train)
     valid = pd.DataFrame(valid)
     test = pd.DataFrame(test)
 
-    # plt.imshow(train.corr())
-    # plt.colorbar()
-    # plt.show()
-
+    # imputation of the data
     imputation.imputation(train)
-
-    # plt.imshow(feat_selection.calc_MI_matrix(train))
-    # plt.colorbar()
-    # plt.show()
+    train.to_csv("after_imputation")
 
     features = df.columns.to_numpy().tolist()
     features_close = feat_selection.remove_similar_features(train, 'Vote', 10)
@@ -46,8 +40,6 @@ def main():
     print(f'features after close and then far removal: {features_close_far}')
     features_far_close = feat_selection.remove_far_features(train[features_far], 'Vote', 10)
     print(f'features after far removal: {features_far_close}')
-
-    train = cleansing.change_categorials(train)
     train.to_csv("hello.csv")
 
 
