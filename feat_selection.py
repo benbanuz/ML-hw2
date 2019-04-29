@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.metrics import normalized_mutual_info_score
 import numpy as np
 from typing import List, Tuple
+from sklearn.base import TransformerMixin
 
 
 def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
@@ -28,7 +29,7 @@ def calc_MI_matrix(df: pd.DataFrame) -> np.ndarray:
 
 
 def remove_similar_features(df: pd.DataFrame, target: str, max_remove: int, close_thresh: int = 2,
-                            mi_thres: float = 0.8) -> List[str]:
+                            mi_thres: float = 0.95) -> List[str]:
     """
     removes features that share a lot of info
     :param df: the dataframe
@@ -46,7 +47,7 @@ def remove_similar_features(df: pd.DataFrame, target: str, max_remove: int, clos
     num_close = {feature: 0 for feature in features}
 
     # calculate mutual information matrix
-    mi_matrix = calc_MI_matrix(df)
+    mi_matrix = calc_MI_matrix(df[features])
 
     # check the mi matrix for close features, use the symmetry to remove redundant iterations
     for i in range(len(features)):
@@ -58,8 +59,8 @@ def remove_similar_features(df: pd.DataFrame, target: str, max_remove: int, clos
                 close_features[feat_i].append(feat_j)
                 close_features[feat_j].append(feat_i)
                 # and update the number accordingly
-                num_close[feat_i] += 1
-                num_close[feat_j] += 1
+                num_close[feat_i] += mi_matrix[i, j]
+                num_close[feat_j] += mi_matrix[i, j]
 
     for _ in range(max_remove):
         # if all features have less close ones then the threshold, stop removing features
@@ -72,7 +73,7 @@ def remove_similar_features(df: pd.DataFrame, target: str, max_remove: int, clos
         # update the close features according to the removal
         for close_feat in close_features[worst_feature]:
             close_features[close_feat].remove(worst_feature)
-            num_close[close_feat] -= 1
+            num_close[close_feat] -= mi_matrix[features.index(worst_feature), features.index(close_feat)]
         # remove the feature
         close_features.pop(worst_feature)
         num_close.pop(worst_feature)
@@ -80,7 +81,7 @@ def remove_similar_features(df: pd.DataFrame, target: str, max_remove: int, clos
     return [target] + list(close_features.keys())
 
 
-def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres: float = 0.2) -> List[str]:
+def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres: float = 0.25) -> List[str]:
     """
     remove features that don't have enough mutual information with the target
     :param df: the dataframe
@@ -97,10 +98,58 @@ def remove_far_features(df: pd.DataFrame, target: str, max_remove: int, mi_thres
     # sort by mi in relation to target
     sorted_mi_vals: List[Tuple[str, float]] = sorted(mi_vals.items(), key=lambda kv: (kv[1], kv[0]))
 
-    for i in range(max_remove-1, -1, -1):
+    for i in range(max_remove - 1, -1, -1):
         # remove all features below the threshold (only need to find the first because we already sorted it)
         if sorted_mi_vals[i][1] < mi_thres:
             sorted_mi_vals = sorted_mi_vals[i + 1:]
             break
 
     return [target] + list(tuple(zip(*sorted_mi_vals))[0])
+
+
+def wrapper_SFS(df_train: pd.DataFrame, df_valid: pd.DataFrame, target: str, clf, cur_score: float = -np.inf,
+                features: List[str] = [], max_features=17) -> List[str]:
+    if len(features) == max_features:
+        return features
+
+    posssible_features: List[str] = list(set(df_train.columns.to_numpy().tolist()).difference(set(features + [target])))
+
+    results = {}
+
+    for feat in posssible_features:
+        clf.fit(df_train[features + [feat]].values, df_train[target].values)
+        pred: np.ndarray = clf.predict(df_valid[features + [feat]].values)
+        results[feat] = np.sum(pred == df_valid[target].values) / pred.size
+
+    best_feature = max(results, key=results.get)
+    best_acc = results[best_feature]
+
+    if best_acc > cur_score:
+        return wrapper_SFS(df_train, df_valid, target, clf, best_acc, features + [best_feature])
+    else:
+        return features
+
+
+def wrapper_SBS(df_train: pd.DataFrame, df_valid: pd.DataFrame, target: str, clf, cur_score: float = -np.inf,
+                features: List[str] = None, max_features=17) -> List[str]:
+
+    if features is None:
+        features = df_train.columns.to_numpy().tolist()
+        features.remove(target)
+
+    results = {}
+
+    for feat in features:
+        used_features = list(set(features).difference({feat}))
+        clf.fit(df_train[used_features].values, df_train[target].values)
+        pred: np.ndarray = clf.predict(df_valid[used_features].values)
+        results[feat] = np.sum(pred == df_valid[target].values) / pred.size
+
+    best_feature = max(results, key=results.get)
+    best_acc = results[best_feature]
+
+    if best_acc >= cur_score or len(features) > max_features:
+        used_features = list(set(features).difference({best_feature}))
+        return wrapper_SBS(df_train, df_valid, target, clf, best_acc, used_features)
+    else:
+        return features

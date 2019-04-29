@@ -52,8 +52,12 @@ def related_features_imputation(feature: int, df: pd.DataFrame, df2: pd.DataFram
     df_tag = df_tag.drop(["Vote"], axis=1)
     mi_matrix = df_tag.corr().as_matrix()
 
+    feature -= 1
+
+    feat_names = list(df)
+
     max_corr = [(i, mi_matrix[i][feature]) for i in range(mi_matrix.shape[0]) if
-                i != feature and df.dtypes[i] == float and abs(mi_matrix[i][feature]) > 0.5]
+                i != feature and df.dtypes[feat_names[i+1]] == float and abs(mi_matrix[i][feature]) > 0.5]
 
     max_corr.sort(reverse=True, key=lambda tup: tup[1])
 
