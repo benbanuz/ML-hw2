@@ -3,13 +3,13 @@ import numpy as np
 import pandas as pd
 import sklearn
 import matplotlib.pyplot as plt
-from pandas.plotting import scatter_matrix
 from imputation import *
 import cleansing
 from feat_selection import *
 from standartisation import *
 from sklearn.tree import DecisionTreeClassifier
 from pprint import pprint
+from relief_algo import relief
 
 
 def show_info(df: pd.DataFrame, stage: str):
