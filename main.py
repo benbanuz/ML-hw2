@@ -4,148 +4,118 @@ import pandas as pd
 import sklearn
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
-import imputation
+from imputation import *
 import cleansing
-import feat_selection
 from feat_selection import *
+from standartisation import *
 from sklearn.tree import DecisionTreeClassifier
+from pprint import pprint
+
+
+def show_info(df: pd.DataFrame, stage: str):
+    plt.imshow(df.corr().abs())
+    plt.colorbar()
+    plt.title(f'correlation after {stage}')
+    plt.show()
+    plt.close('all')
+
+    plt.imshow(calc_MI_matrix(df))
+    plt.colorbar()
+    plt.title(f'MI after {stage}')
+    plt.show()
+    plt.close('all')
+
+
+def rows_in_df(df: pd.DataFrame, rows: List[int]) -> List[int]:
+    return list(set(df.index.values.tolist()).intersection(set(rows)))
 
 
 def main():
     df = loading.load_csv()
-    # # cleansing the data
-    # df = cleansing.cleanse(df)
-    # for col in df:
-    #     if col == "Vote":
-    #         df[col].astype('category')
-    #     else:
-    #         df[col].astype(float)
-    #
-    # # # splitting the data
-    # train, valid, test = loading.split_data(df)
-    # train = pd.DataFrame(train)
-    # valid = pd.DataFrame(valid)
-    # test = pd.DataFrame(test)
 
-    # # imputation of the data
-    # imputation.imputation(train)
+    # splitting the data
+    train, valid, test = loading.split_data(df, 'Vote')
 
-    #
-    # train.to_csv("train_after_imputation.csv", index=False)
-    #
-    # imputation.imputation(valid, train)
-    # valid.to_csv("valid_after_imputation.csv", index=False)
+    train.to_csv('orig_train.csv', index=False)
+    valid.to_csv('orig_valid.csv', index=False)
+    test.to_csv('orig_test.csv', index=False)
 
-    train = pd.read_csv('train_after_imputation.csv')
-    valid = pd.read_csv('valid_after_imputation.csv')
+    # cleansing the data
+    train = pd.DataFrame(cleansing.cleanse(train))
+    valid = pd.DataFrame(cleansing.cleanse(valid))
+    test = pd.DataFrame(cleansing.cleanse(test))
 
-    plt.imshow(train.corr().abs())
-    plt.colorbar()
-    plt.title("correlation after imputation")
-    plt.show()
-    plt.close('all')
+    # imputation of the data
+    imputation(train)
 
-    plt.imshow(calc_MI_matrix(train))
-    plt.colorbar()
-    plt.title("MI after imputation")
-    plt.show()
-    plt.close('all')
+    train.to_csv("train_after_imputation.csv", index=False)
 
-    features = df.columns.to_numpy().tolist()
-    features_close = feat_selection.remove_similar_features(train, 'Vote', 8)
-    print(f'features after close removal: {features_close}')
-    plt.imshow(train[features_close].corr().abs())
-    plt.colorbar()
-    plt.title("correlation after close removal")
-    plt.show()
-    plt.close('all')
+    imputation(valid, train)
+    valid.to_csv("valid_after_imputation.csv", index=False)
 
-    plt.imshow(calc_MI_matrix(train[features_close]))
-    plt.colorbar()
-    plt.title("MI after close removal")
-    plt.show()
-    plt.close('all')
+    # train = pd.read_csv('train_after_imputation.csv')
+    # valid = pd.read_csv('valid_after_imputation.csv')
 
-    features_far = feat_selection.remove_far_features(train, 'Vote', 8)
-    print(f'features after far removal: {features_far}')
-    plt.imshow(train[features_far].corr().abs())
-    plt.colorbar()
-    plt.title("correlation after far removal")
-    plt.show()
-    plt.close('all')
+    show_info(train, "imputation")
 
-    plt.imshow(calc_MI_matrix(train[features_far]))
-    plt.colorbar()
-    plt.title("MI after far removal")
-    plt.show()
-    plt.close('all')
+    features: List[str] = train.columns.to_numpy().tolist()
+    non_norm_feats = ["Looking_at_poles_results", "Married", "Will_vote_only_large_party", "Financial_agenda_matters"]
+    non_norm_feats += [f for f in features if f.startswith('Occ') or f.startswith('trans') or f.startswith("Issue")]
 
-    features_close_far = feat_selection.remove_similar_features(train[features_close], 'Vote', 8)
-    print(f'features after close and then far removal: {features_close_far}')
-    plt.imshow(train[features_close_far].corr().abs())
-    plt.colorbar()
-    plt.title("correlation after close and then far removal")
-    plt.show()
-    plt.close('all')
+    scaler = DFScaler(train, list(set(features).difference(set(non_norm_feats + ['Vote']))))
 
-    plt.imshow(calc_MI_matrix(train[features_close_far]))
-    plt.colorbar()
-    plt.title("MI after close and then far removal")
-    plt.show()
-    plt.close('all')
+    features_close = remove_similar_features(train, 'Vote', 8)
+    print(f'features after close removal:')
+    pprint(features_close)
+    show_info(train[features_close], "close removal")
 
-    features_far_close = feat_selection.remove_far_features(train[features_far], 'Vote', 8)
-    print(f'features after far and then close removal: {features_far_close}')
-    plt.imshow(train[features_far_close].corr().abs())
-    plt.colorbar()
-    plt.title("correlation after far and then close removal")
-    plt.show()
-    plt.close('all')
+    features_far = remove_far_features(train, 'Vote', 8)
+    print(f'features after far removal:')
+    pprint(features_far)
+    show_info(train[features_far], "far removal")
 
-    plt.imshow(calc_MI_matrix(train[features_far_close]))
-    plt.colorbar()
-    plt.title("MI after far and then close removal")
-    plt.show()
-    plt.close('all')
+    features_close_far = remove_similar_features(train[features_close], 'Vote', 8)
+    print(f'features after close and then far removal:')
+    pprint(features_close_far)
+    show_info(train[features_close_far], "close and then far removal")
 
-    sfs_features = wrapper_SFS(train[features_close_far], valid[features_close_far], 'Vote', DecisionTreeClassifier())
+    features_far_close = remove_far_features(train[features_far], 'Vote', 8)
+    print(f'features after far and then close removal:')
+    pprint(features_far_close)
+    show_info(train[features_far_close], "far and then close removal")
+
+    train = scaler.scale(train)
+    valid = scaler.scale(valid)
+    show_info(train, "scaling")
+
+    relief_features = relief(train[features_close_far], 'Vote', 8)
+    relief_features += ['Vote']
+    print(f'features after relief:')
+    pprint(relief_features)
+    show_info(train[relief_features], "relief")
+
+    sfs_features = wrapper_SFS(train[relief_features], valid[relief_features], 'Vote', DecisionTreeClassifier())
     sfs_features += ['Vote']
-    print(f'features after SFS: {features_far_close}')
-    plt.imshow(train[sfs_features].corr().abs())
-    plt.colorbar()
-    plt.title("correlation after SFS")
-    plt.show()
-    plt.close('all')
+    print(f'features after SFS:')
+    pprint(sfs_features)
+    show_info(train[sfs_features], "SFS")
 
-    plt.imshow(calc_MI_matrix(train[sfs_features]))
-    plt.colorbar()
-    plt.title("MI after SFS")
-    plt.show()
-    plt.close('all')
-
-    sbs_features = wrapper_SBS(train[features_close_far], valid[features_close_far], 'Vote', DecisionTreeClassifier())
+    sbs_features = wrapper_SBS(train[relief_features], valid[relief_features], 'Vote', DecisionTreeClassifier())
     sbs_features += ['Vote']
-    print(f'features after SBS: {features_far_close}')
-    plt.imshow(train[sbs_features].corr().abs())
-    plt.colorbar()
-    plt.title("correlation after SBS")
-    plt.show()
-    plt.close('all')
+    print(f'features after SBS:')
+    pprint(sbs_features)
+    show_info(train[sbs_features], "SBS")
 
-    plt.imshow(calc_MI_matrix(train[sbs_features]))
-    plt.colorbar()
-    plt.title("MI after SBS")
-    plt.show()
-    plt.close('all')
+    test = imputation(test, train)
+    test = scaler.scale(test)
 
-    train.to_csv("hello.csv")
+    # TODO choose final features
+    final_features = sbs_features
+    pprint(final_features)
+    train[final_features].to_csv('train_final.csv', index=False)
+    valid[final_features].to_csv('valid_final.csv', index=False)
+    test[final_features].to_csv('test_final.csv', index=False)
 
-
-"""""
-    print(valid["Overall_happiness_score"].isna().sum())
-    imputation.related_features_imputation(14, valid, train)
-    print(valid["Overall_happiness_score"].isna().sum())
-    valid.to_csv("hello.csv")"""
 
 if __name__ == "__main__":
     main()
