@@ -15,7 +15,12 @@ def change_categorials(df: pd.DataFrame):
 
     df = pd.get_dummies(df, columns=["Most_Important_Issue", "Main_transportation", "Occupation"],
                         prefix=["Issue", "trans", "Occ"])
-    # df = df.drop(columns=['Most_Important_Issue', 'Main_transportation', 'Occupation'])
+
+    for col in df:
+        if col == "Vote":
+            df[col].astype('category')
+        else:
+            df[col].astype(float)
 
     return df
 
