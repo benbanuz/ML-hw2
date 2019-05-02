@@ -47,11 +47,13 @@ def main():
 
     # imputation of the data
     imputation(train)
-
     train.to_csv("train_after_imputation.csv", index=False)
 
     imputation(valid, train)
     valid.to_csv("valid_after_imputation.csv", index=False)
+
+    imputation(test, train)
+    test.to_csv("test_after_imputation.csv", index=False)
 
     # train = pd.read_csv('train_after_imputation.csv')
     # valid = pd.read_csv('valid_after_imputation.csv')
@@ -69,23 +71,24 @@ def main():
     pprint(features_close)
     show_info(train[features_close], "close removal")
 
-    features_far = remove_far_features(train, 'Vote', 8)
-    print(f'features after far removal:')
-    pprint(features_far)
-    show_info(train[features_far], "far removal")
+    # features_far = remove_far_features(train, 'Vote', 8)
+    # print(f'features after far removal:')
+    # pprint(features_far)
+    # show_info(train[features_far], "far removal")
 
     features_close_far = remove_similar_features(train[features_close], 'Vote', 8)
     print(f'features after close and then far removal:')
     pprint(features_close_far)
     show_info(train[features_close_far], "close and then far removal")
 
-    features_far_close = remove_far_features(train[features_far], 'Vote', 8)
-    print(f'features after far and then close removal:')
-    pprint(features_far_close)
-    show_info(train[features_far_close], "far and then close removal")
+    # features_far_close = remove_far_features(train[features_far], 'Vote', 8)
+    # print(f'features after far and then close removal:')
+    # pprint(features_far_close)
+    # show_info(train[features_far_close], "far and then close removal")
 
     train = scaler.scale(train)
     valid = scaler.scale(valid)
+    test = scaler.scale(test)
     show_info(train, "scaling")
 
     relief_features = relief(train[features_close_far], 'Vote', 8)
@@ -106,11 +109,9 @@ def main():
     pprint(sbs_features)
     show_info(train[sbs_features], "SBS")
 
-    test = imputation(test, train)
-    test = scaler.scale(test)
-
     # TODO choose final features
     final_features = sbs_features
+    print("the final features are:")
     pprint(final_features)
     train[final_features].to_csv('train_final.csv', index=False)
     valid[final_features].to_csv('valid_final.csv', index=False)
