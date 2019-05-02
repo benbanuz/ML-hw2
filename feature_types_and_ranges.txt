@@ -1,0 +1,102 @@
+Vote: categorical, maybe convert to int or one-hot?
+Occupation_Satisfaction: categorical - [1,2,3,4,5,6,7,8,9,10] - convert to int
+Avg_monthly_expense_when_under_age_21: float, should be non-negative (val >= 0)
+AVG_lottary_expanses: float - should be non-negative (val >= 0)
+Most_Important_Issue: categorical - should convert to one-hot
+Avg_monthly_expense_on_pets_or_plants: float, should be non-negative (val >= 0)
+Looking_at_poles_results: yes/no - should convert to int with yes=1 and no=0
+Avg_environmental_importance: float - should be non-negative (val >= 0)
+Married: yes/no - should convert to int with yes=1 and no=0
+Gender: male/female - should convert to int with male=1 and female=-1 (or the other way around)
+Voting_Time: By_16:00/After_16:00 - should convert to int with After_16:00=1 and By_16:00=-1
+Financial_balance_score_(0-1): float - should be in range (0-1)
+%Of_Household_Income: float - should be in range (0-100)
+Yearly_IncomeK: float, should be non-negative (val >= 0)
+Overall_happiness_score: float - should be non-negative (val >= 0)
+Garden_sqr_meter_per_person_in_residancy_area: float, should be non-negative (val >= 0)
+Avg_Residancy_Altitude: float - should be non-negative (val >= 0)
+Yearly_ExpensesK: float - should be non-negative (val >= 0)
+%Time_invested_in_work: float - should be in range (0-100)
+Avg_government_satisfaction: float - should be non-negative (val >= 0)
+Avg_Satisfaction_with_previous_vote: float - should be non-negative (val >= 0)
+Avg_monthly_household_cost: float - should be non-negative (val >= 0)
+Will_vote_only_large_party: yes/maybe/no - should convert to int with yes=1, maybe=0 and no=-1
+Phone_minutes_10_years: float - should be non-negative (val >= 0)
+Avg_size_per_room: float - should be non-negative (val >= 0)
+Weighted_education_rank: float - should be non-negative (val >= 0)
+%_satisfaction_financial_policy: float - should be in range (0-100)
+Avg_monthly_income_all_years: float - should be non-negative (val >= 0)
+Last_school_grades: float - should be multiple of 10 and in range of (0-100)
+Age_group: categorical - convert to int
+Number_of_differnt_parties_voted_for: float - should be non-negative and natural number
+Political_interest_Total_Score: float - should be non-negative (val >= 0)
+Number_of_valued_Kneset_members: float - should be natural and in range [0,1,...,120]
+Main_transportation: categorical - should convert to one-hot
+Occupation: categorical - should convert to one-hot
+Avg_education_importance: float - float - should be non-negative (val >= 0)
+Num_of_kids_born_last_10_years: float - should be natural and in range [0,1,...,10]
+Financial_agenda_matters: yes/no - should convert to int with yes=1 and no=0
+
+
+
+Non-negative float:
+AVG_lottary_expanses
+Avg_environmental_importance
+Overall_happiness_score
+Avg_Residancy_Altitude
+Yearly_ExpensesK
+Avg_government_satisfaction
+Avg_Satisfaction_with_previous_vote
+Avg_monthly_household_cost
+Phone_minutes_10_years
+Avg_size_per_room
+Weighted_education_rank
+Avg_monthly_income_all_years
+Political_interest_Total_Score
+Avg_education_importance
+
+
+non-negative int:
+Number_of_differnt_parties_voted_for
+
+
+other float ranges:
+%Of_Household_Income - (0-100)
+%Time_invested_in_work - (0-100)
+%_satisfaction_financial_policy - (0-100)
+Financial_balance_score_(0-1) - (0-1)
+
+
+categorical with int code:
+Age_group
+
+
+specific range:
+Occupation_Satisfaction - [1,2,...,10]
+Number_of_valued_Kneset_members - [1,2,...,120]
+Num_of_kids_born_last_10_years - [0,1,...,10]
+Last_school_grades - [0,10,20,...,100] (hops of 10)
+
+categorical yes/no (boolean):
+Looking_at_poles_results
+Married
+Financial_agenda_matters
+
+one-hot:
+Most_Important_Issue
+Main_transportation
+Occupation
+
+other categorical codes:
+Gender - male=1 and female=-1 (or the other way around)
+Voting_Time - After_16:00=1 and By_16:00=-1
+Will_vote_only_large_party - yes=1, maybe=0 and no=-1
+
+DO NOT NORMALIZE THESE FEATURES:
+Looking_at_poles_results, Married, Financial_agenda_matters, Will_vote_only_large_party, Occ_Student_or_Unemployed,
+Occ_Services_or_Retail, Occ_Public_Sector, Occ_Industry_or_other, Occ_Hightech, trans_Public_or_other,
+trans_Motorcycle_or_truck, trans_Foot_or_bicycle, trans_Car, Issue_Social, Issue_Other, Issue_Military,
+Issue_Healthcare, Issue_Foreign_Affairs, Issue_Financial, Issue_Environment.
+
+
+
